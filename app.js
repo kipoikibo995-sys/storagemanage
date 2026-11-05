@@ -79,7 +79,7 @@ function dangNhap() {
 }
 async function layEmail() {
   try { var r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }); var j = await r.json(); email = j.email || ''; } catch (e) { email = ''; }
-  $('me-name').textContent = email ? 'Đang dùng: ' + email : '';
+  $('me-name').textContent = email || ''; $('me-av').textContent = email ? email.charAt(0) : '?';
 }
 $('btn-login').onclick = dangNhap;
 $('btn-logout').onclick = function () {
@@ -92,7 +92,7 @@ function hienDangNhap(on) {
   document.body.classList.toggle('logged-out', on);
   ['menu', 'btn-tao', 'fab', 'btn-reload', 'btn-backup', 'btn-logout', 'link-sheet'].forEach(function (id) { $(id).hidden = on; });
   $('sync').textContent = on ? 'Chưa đăng nhập' : 'Đã kết nối Google Sheet';
-  if (on) { $('me-name').textContent = ''; PAGES.forEach(function (p) { $('p-' + p[0]).classList.remove('on'); }); $('p-dang-nhap').classList.add('on'); }
+  if (on) { $('me-name').textContent = ''; $('me-av').textContent = '?'; PAGES.forEach(function (p) { $('p-' + p[0]).classList.remove('on'); }); $('p-dang-nhap').classList.add('on'); }
   else { $('p-dang-nhap').classList.remove('on'); mo(location.hash.slice(1)); }
 }
 
@@ -210,7 +210,22 @@ function mo(id) {
   PAGES.forEach(function (p) { $('p-' + p[0]).classList.toggle('on', p[0] === id); if (p[0] === id) $('m-' + p[0]).setAttribute('aria-current', 'page'); else $('m-' + p[0]).removeAttribute('aria-current'); });
 }
 function den(id) { mo(id); try { if (location.hash.slice(1) !== id) history.replaceState(null, '', '#' + id); } catch (e) {} try { window.scrollTo(0, 0); } catch (e) {} }
-$('menu').innerHTML = PAGES.map(function (p, i) { return (i === 5 ? '<div class="menu-sep"></div>' : '') + '<button type="button" id="m-' + p[0] + '">' + p[1] + '</button>'; }).join('');
+var ICO = {
+  'tong-quan': '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  'phieu': '<path d="M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4"/>',
+  'ton-kho': '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  'kiem-ke': '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/>',
+  'danh-muc': '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  'bao-cao': '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/>',
+  'lich-su': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  'hoi-kho': '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  'con': '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M8 12l3 3 5-5"/>',
+  'sap': '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>',
+  'het': '<circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/>',
+  'lech': '<path d="M3 12h4l3-8 4 16 3-8h4"/>'
+};
+function ico(k) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + ICO[k] + '</svg>'; }
+$('menu').innerHTML = PAGES.map(function (p, i) { return (i === 0 ? '<div class="menu-h">Nghiệp vụ</div>' : i === 5 ? '<div class="menu-h">Báo cáo &amp; tra cứu</div>' : '') + '<button type="button" id="m-' + p[0] + '">' + ico(p[0]) + '<span>' + p[1] + '</span></button>'; }).join('');
 PAGES.forEach(function (p) { $('m-' + p[0]).onclick = function () { den(p[0]); }; });
 window.addEventListener('hashchange', function () { mo(location.hash.slice(1)); });
 function ganDong(tbl, fn) { Array.prototype.forEach.call(tbl.querySelectorAll('tr[data-ma]'), function (tr) { tr.tabIndex = 0; var go = function () { fn(tr.dataset.ma); }; tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); }; }); }
@@ -242,7 +257,7 @@ function veTongQuan() {
   var T = tinhTon(), c = { con: 0, sap: 0, het: 0, lech: 0 }, nam = HOM_NAY.slice(0, 4);
   DB.hang.forEach(function (h) { var t = T[h.ma].tt; if (t === 'Còn hàng') c.con++; if (t === 'Sắp hết') c.sap++; if (t === 'Hết hàng') c.het++; if (t === 'Lệch kiểm kê' || t === 'Âm kho') c.lech++; });
   $('tq-ngay').textContent = 'Hôm nay ' + ngayVN(HOM_NAY) + ' · ' + DB.hang.filter(function (h) { return h.nhom !== 'Dịch vụ'; }).length + ' mặt hàng';
-  $('stats').innerHTML = stat('', c.con, 'Còn hàng') + stat(c.sap ? 'warn' : '', c.sap, 'Sắp hết, nên đặt thêm') + stat(c.het ? 'bad' : '', c.het, 'Hết hàng') + stat(c.lech ? 'bad' : '', c.lech, 'Lệch kiểm kê / âm');
+  $('stats').innerHTML = stat('ok', c.con, 'Còn hàng', 'con', 'mặt hàng có tồn') + stat('warn', c.sap, 'Sắp hết', 'sap', c.sap ? 'nên đặt thêm' : 'chưa đặt mức tối thiểu') + stat('bad', c.het, 'Hết hàng', 'het', 'tồn bằng 0') + stat('bad', c.lech, 'Lệch kiểm kê', 'lech', 'sổ khác số đếm hoặc âm');
   var thang = [], nhap = [], xuat = [], max = 1;
   for (var i = 11; i >= 0; i--) { var d = new Date(Number(nam), Number(HOM_NAY.slice(5, 7)) - 1 - i, 1); thang.push(d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)); }
   thang.forEach(function (k) {
@@ -280,7 +295,7 @@ function daBanGanDay(ma) {
   var moc = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
   return DB.phieu.some(function (p) { return p.ma === ma && p.loai === 'X' && (p.ngay || '') >= moc; });
 }
-function stat(c, n, l) { return '<div class="stat"><span class="v ' + c + '">' + n + '</span><span class="sub">' + l + '</span></div>'; }
+function stat(c, n, l, k, ghi) { return '<div class="stat ' + c + (n ? '' : ' zero') + '"><div class="stat-t"><span class="lb">' + l + '</span><span class="chip">' + ico(k) + '</span></div><span class="v">' + n + '</span><span class="cap">' + ghi + '</span></div>'; }
 
 /* ============ PHIẾU NHIỀU DÒNG ============ */
 var loai = 'N', soDong = 0, dangLuu = false;
@@ -373,7 +388,7 @@ function veGan() {
     ds.map(function (p, i) {
       var mt = p.dong.map(function (x) { return x.ma + ' ' + soDau(hienSL(x)); }).join(', ');
       var xoa = p.so && (!p.nguoi || p.nguoi === email);
-      return '<tr><td><b>' + esc(p.so || '—') + '</b></td><td class="num">' + ngayVN(p.ngay) + '</td><td class="' + (p.loai === 'N' ? 'in' : p.loai === 'X' ? 'out' : '') + '">' + TEN_LOAI[p.loai] + '</td><td>' + esc(p.doiTac) + '</td><td class="sub" style="white-space:normal;min-width:220px">' + esc(mt) + '</td><td class="sub">' + (p.loai === 'D' ? '' : p.hd === 'Y' ? (p.soHD ? 'Số ' + esc(p.soHD) : 'Có') : 'Không') + '</td><td class="sub">' + esc(p.nguoi || '') + '</td><td class="r">' +
+      return '<tr><td><b>' + esc(p.so || '—') + '</b></td><td class="num">' + ngayVN(p.ngay) + '</td><td><span class="pill ' + (p.loai === 'N' ? 'in' : p.loai === 'X' ? 'out' : 'neu') + '">' + TEN_LOAI[p.loai] + '</span></td><td>' + esc(p.doiTac) + '</td><td class="sub" style="white-space:normal;min-width:220px">' + esc(mt) + '</td><td class="sub">' + (p.loai === 'D' ? '' : p.hd === 'Y' ? (p.soHD ? 'Số ' + esc(p.soHD) : 'Có') : 'Không') + '</td><td class="sub">' + esc(p.nguoi || '') + '</td><td class="r">' +
         (xoa ? '<button class="btn sec xs" type="button" data-xoa="' + esc(p.so) + '">Xóa</button>' : '') + '</td></tr>';
     }).join('') + '</tbody>' : '<tr><td class="empty">Chưa có phiếu mới nào. Phiếu lịch sử cũ xem ở mục Lịch sử.</td></tr>';
   Array.prototype.forEach.call($('t-gan').querySelectorAll('[data-xoa]'), function (b) {
