@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Bố cục app: menu trái 224px + vùng làm việc tối đa 1080px. Lưới 4px, thang chữ 12/14/16/20/28. */
+/* Bố cục app: menu trái 240px + vùng làm việc giãn hết màn hình, tối đa 1600px, căn giữa. Lưới 4px, thang chữ 12/14/16/20/28. */
 :root {
   --bg: #F7F8F8;
   --panel: #FFFFFF;
@@ -94,7 +94,7 @@ nav.menu button[aria-current="page"] .ico { color: var(--side-mark); }
 .link-btn:hover { text-decoration: underline; }
 
 main { padding: var(--s6) var(--s6) var(--s7); min-width: 0; }
-.page { display: none; max-width: 1080px; flex-direction: column; gap: var(--s6); }
+.page { display: none; max-width: 1600px; margin: 0 auto; flex-direction: column; gap: var(--s6); }
 .page.on { display: flex; }
 .page > *, .two > * { min-width: 0; }
 .page-h { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; }
@@ -259,7 +259,7 @@ main { padding-bottom: 96px; }
   </aside>
 
   <main>
-    <div id="banner" style="max-width:1080px;margin-bottom:24px" hidden></div>
+    <div id="banner" style="max-width:1600px;margin:0 auto 24px" hidden></div>
     <!-- ĐĂNG NHẬP -->
     <section class="page" id="p-dang-nhap">
       <div class="panel panel-b stack" style="max-width:480px">
