@@ -30,14 +30,14 @@ Cột `SoPhieu` được app tự thêm khi lưu phiếu đầu tiên. Chương 
 3. **APIs & Services → OAuth consent screen**: chọn **External**, điền tên app, email hỗ trợ. Ở mục **Test users** thêm Gmail của những người được dùng app.
 4. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
    - Application type: **Web application**
-   - Authorized JavaScript origins: `https://kipoikibo995-sys.github.io`
+   - Authorized JavaScript origins: `https://storagemanage.vercel.app`
 5. Chép **Client ID** (dạng `….apps.googleusercontent.com`).
 
 ### 2. Điền cấu hình
 Mở `config.js`, dán Client ID vào `clientId`. `sheetId` là đoạn giữa `/d/` và `/edit` trong link Google Sheet.
 
-### 3. Đăng lên GitHub Pages
-Repo → **Settings → Pages** → Source: **Deploy from a branch**, Branch `main`, thư mục `/ (root)`.
+### 3. Đăng lên web
+Repo đã nối với Vercel: mỗi lần push lên `main` thì https://storagemanage.vercel.app tự cập nhật.
 
 ## Ai dùng được
 - Người dùng phải được **chia sẻ Google Sheet** (quyền Người chỉnh sửa) **và** có trong danh sách **Test users**.
