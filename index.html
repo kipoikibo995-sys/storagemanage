@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kho Hoành Uy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Bố cục app: menu trái 224px + vùng làm việc tối đa 1080px. Lưới 4px, thang chữ 12/14/16/20/28. */
+:root {
+  --bg: #F7F8F8;
+  --panel: #FFFFFF;
+  --ink: #18201F;
+  --ink-2: #4F5B59;
+  --ink-3: #7D8987;
+  --line: #E3E7E6;
+  --accent: #0B6E5F;
+  --accent-wash: #E8F3F0;
+  --on-accent: #FFFFFF;
+  --ok: #1D7A4B; --warn: #A15C00; --bad: #B3261E;
+  --bar-in: #0B6E5F; --bar-out: #C9772B;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --t-xs: 12px; --t-sm: 14px; --t-md: 16px; --t-lg: 20px; --t-xl: 28px;
+  --r: 6px;
+  --h-ctl: 36px;
+  --font: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111615; --panel: #171D1C; --ink: #E3EAE8; --ink-2: #A9B6B3; --ink-3: #7F8E8B; --line: #263130;
+    --accent: #4BBFA9; --accent-wash: #17302B; --on-accent: #0E1413;
+    --ok: #5FC890; --warn: #E3A752; --bad: #F08078; --bar-in: #4BBFA9; --bar-out: #E3A061;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111615; --panel: #171D1C; --ink: #E3EAE8; --ink-2: #A9B6B3; --ink-3: #7F8E8B; --line: #263130;
+  --accent: #4BBFA9; --accent-wash: #17302B; --on-accent: #0E1413;
+  --ok: #5FC890; --warn: #E3A752; --bad: #F08078; --bar-in: #4BBFA9; --bar-out: #E3A061;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 400 var(--t-sm)/20px var(--font); }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: var(--t-xl); line-height: 36px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: var(--t-md); line-height: 24px; font-weight: 600; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.num { font-variant-numeric: tabular-nums; }
+.sub { color: var(--ink-2); }
+.cap { font-size: var(--t-xs); line-height: 16px; color: var(--ink-3); }
+.sr { position: absolute; left: -9999px; }
+
+.app { display: grid; grid-template-columns: 224px 1fr; min-height: 100%; }
+aside.side { background: var(--panel); border-right: 1px solid var(--line); padding: var(--s5) var(--s3); display: flex; flex-direction: column; gap: var(--s5); position: sticky; top: 0; height: 100vh; }
+.logo { padding: 0 var(--s3); display: flex; flex-direction: column; gap: var(--s1); }
+.logo b { font-size: var(--t-md); line-height: 24px; font-weight: 700; white-space: nowrap; }
+nav.menu { display: flex; flex-direction: column; gap: 2px; }
+nav.menu button { display: flex; align-items: center; height: var(--h-ctl); padding: 0 var(--s3); border: 0; border-radius: var(--r); background: none; color: var(--ink-2); font-weight: 500; text-align: left; cursor: pointer; white-space: nowrap; }
+nav.menu button:hover { background: var(--bg); color: var(--ink); }
+nav.menu button[aria-current="page"] { background: var(--accent-wash); color: var(--accent); font-weight: 600; }
+.menu-sep { height: 1px; background: var(--line); margin: var(--s2) var(--s3); }
+.side-foot { margin-top: auto; padding: 0 var(--s3); display: flex; flex-direction: column; gap: var(--s2); }
+.link-btn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 500; cursor: pointer; text-align: left; }
+.link-btn:hover { text-decoration: underline; }
+
+main { padding: var(--s6) var(--s6) var(--s7); min-width: 0; }
+.page { display: none; max-width: 1080px; flex-direction: column; gap: var(--s6); }
+.page.on { display: flex; }
+.page > *, .two > * { min-width: 0; }
+.page-h { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; }
+.page-h .t { display: flex; flex-direction: column; gap: var(--s1); }
+.acts { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
+.panel-h { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); padding: var(--s4) var(--s4) 0; }
+.panel-b { padding: var(--s4); }
+.stack { display: flex; flex-direction: column; gap: var(--s4); }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); }
+.stat { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s1); }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat .v { font-size: var(--t-xl); line-height: 36px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .v.warn { color: var(--warn); } .stat .v.bad { color: var(--bad); }
+.two { display: grid; grid-template-columns: 3fr 2fr; gap: var(--s5); }
+
+.st { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--ink-2); }
+.st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.st.warn::before { background: var(--warn); } .st.bad::before { background: var(--bad); } .st.neu::before { background: var(--ink-3); }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { height: 40px; padding: 0 var(--s3); border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+th { height: 36px; font-size: var(--t-xs); font-weight: 500; color: var(--ink-3); }
+.r { text-align: right; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+tbody tr.go { cursor: pointer; }
+tbody tr.go:hover td { background: var(--bg); }
+tr.dim td { color: var(--ink-3); }
+tr.sel td { background: var(--accent-wash); }
+.in { color: var(--ok); } .out { color: var(--bad); }
+.empty { padding: var(--s5) var(--s4); color: var(--ink-3); }
+
+.legend { display: flex; gap: var(--s4); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-xs); color: var(--ink-2); }
+.legend i { width: 8px; height: 8px; border-radius: 2px; }
+svg.chart { width: 100%; height: auto; display: block; }
+svg.chart text { fill: var(--ink-3); font: 400 11px var(--font); }
+svg.chart .g { stroke: var(--line); } svg.chart .bi { fill: var(--bar-in); } svg.chart .bo { fill: var(--bar-out); }
+.rank { margin: 0; padding: 0; }
+.rank li { list-style: none; display: grid; grid-template-columns: 1fr auto; gap: var(--s1) var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
+.rank li:last-child { border-bottom: 0; }
+.rank .bar { grid-column: 1 / -1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.rank .bar i { display: block; height: 100%; background: var(--accent); }
+
+.grid { display: grid; gap: var(--s3); align-items: end; }
+.g-phieu { grid-template-columns: 160px 1fr 160px 120px; }
+.g-kk { grid-template-columns: 160px 2fr 120px 1fr auto; }
+.g-dm { grid-template-columns: 140px 2fr 100px 1fr 110px 110px; }
+.f { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.f label { font-size: var(--t-xs); line-height: 16px; font-weight: 500; color: var(--ink-2); }
+input, select { height: var(--h-ctl); padding: 0 var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); min-width: 0; width: 100%; }
+input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-wash); }
+input[readonly] { background: var(--bg); color: var(--ink-2); }
+.btn { height: var(--h-ctl); padding: 0 var(--s4); border-radius: var(--r); border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn:hover { filter: brightness(1.05); }
+.btn.sec { background: var(--panel); color: var(--ink); border-color: var(--line); }
+.btn.sec:hover { border-color: var(--ink-3); filter: none; }
+.btn.xs { height: 28px; padding: 0 var(--s2); font-size: var(--t-xs); font-weight: 500; }
+.icon-btn { width: var(--h-ctl); height: var(--h-ctl); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1; }
+.icon-btn:hover { color: var(--bad); border-color: var(--bad); }
+.seg { display: inline-flex; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); }
+.seg button { height: 30px; padding: 0 var(--s4); border: 0; border-radius: 4px; background: none; color: var(--ink-2); font-weight: 500; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.note { padding: var(--s2) var(--s3); border-radius: var(--r); }
+.note.err { background: color-mix(in srgb, var(--bad) 10%, var(--panel)); color: var(--bad); }
+.note.ok { background: color-mix(in srgb, var(--ok) 10%, var(--panel)); color: var(--ok); }
+.filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--s3); }
+.bc-ctl { display: grid; grid-template-columns: 120px 120px 1fr auto; gap: var(--s3); align-items: end; }
+
+.lines { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.lines-h, .line { display: grid; grid-template-columns: 32px 1fr 120px 200px 36px; gap: var(--s3); align-items: center; }
+.lines-h { height: 36px; font-size: var(--t-xs); font-weight: 500; color: var(--ink-3); border-bottom: 1px solid var(--line); }
+.line { padding: var(--s2) 0; border-bottom: 1px solid var(--line); }
+.line .idx { color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+.line .hint { font-size: var(--t-xs); line-height: 16px; color: var(--ink-3); }
+.line .hint.bad { color: var(--bad); }
+.foot-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+
+.chat { display: flex; flex-direction: column; gap: var(--s3); height: 420px; overflow-y: auto; padding: var(--s4); border-bottom: 1px solid var(--line); }
+.msg { max-width: 75%; padding: var(--s2) var(--s3); border-radius: var(--r); white-space: pre-wrap; }
+.msg.me { align-self: flex-end; background: var(--accent); color: var(--on-accent); }
+.msg.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--line); }
+.ask { display: grid; grid-template-columns: 1fr auto; gap: var(--s2); padding: var(--s4); }
+.sugs { display: flex; gap: var(--s2); flex-wrap: wrap; padding: var(--s4) var(--s4) 0; }
+.sug { height: 28px; padding: 0 var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--ink-2); font-size: var(--t-xs); cursor: pointer; }
+.sug:hover { border-color: var(--accent); color: var(--accent); }
+
+.dlg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: none; align-items: center; justify-content: center; padding: var(--s4); }
+.dlg.on { display: flex; }
+.dlg .panel { max-width: 420px; padding: var(--s5); display: flex; flex-direction: column; gap: var(--s4); }
+.dlg .acts { justify-content: flex-end; }
+
+/* Nút + nổi: lối tắt tạo mới ở mọi trang */
+.fab { position: fixed; right: var(--s5); bottom: var(--s5); width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); font-size: 28px; line-height: 1; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); z-index: 20; }
+.fab[aria-expanded="true"] { transform: rotate(45deg); }
+.fab-menu { position: fixed; right: var(--s5); bottom: 88px; min-width: 200px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); padding: var(--s1); display: none; flex-direction: column; z-index: 20; }
+.fab-menu.on { display: flex; }
+.fab-menu button { height: 40px; padding: 0 var(--s3); border: 0; background: none; text-align: left; border-radius: 4px; cursor: pointer; font-weight: 500; }
+.fab-menu button:hover, .fab-menu button:focus-visible { background: var(--accent-wash); color: var(--accent); }
+main { padding-bottom: 96px; }
+.new-btn { margin: 0 var(--s3); flex: none; }
+.fab-menu.at-top { position: absolute; }
+@media (prefers-reduced-motion: no-preference) { .fab { transition: transform 0.15s; } }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  aside.side { position: static; height: auto; flex-direction: row; align-items: center; padding: var(--s2) var(--s4); gap: var(--s4); border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .logo .cap, .menu-sep, .side-foot { display: none; }
+  nav.menu { flex-direction: row; }
+  main { padding: var(--s5) var(--s4) var(--s6); }
+  .two { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .g-phieu, .g-kk, .g-dm, .filters, .bc-ctl { grid-template-columns: 1fr 1fr; }
+  .wide { grid-column: 1 / -1; }
+  .lines-h { display: none; }
+  .line { grid-template-columns: 1fr 96px 36px; }
+  .line .idx { display: none; }
+  .line .hint { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 900px) { main { padding-bottom: 96px; } .fab { right: var(--s4); bottom: var(--s4); } .fab-menu { right: var(--s4); bottom: 80px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><b>Kho Hoành Uy</b><span class="cap">Dữ liệu trên Google Sheet</span></div>
+    <button class="btn new-btn" type="button" id="btn-tao" aria-haspopup="menu" aria-controls="fab-menu">+ Tạo mới</button>
+    <nav class="menu" id="menu" aria-label="Chức năng"></nav>
+    <div class="side-foot">
+      <span class="cap" id="sync">Chưa đăng nhập</span>
+      <span class="cap" id="me-name"></span>
+      <button class="link-btn" type="button" id="btn-reload" hidden>Làm mới dữ liệu</button>
+      <a class="link-btn" id="link-sheet" href="#" target="_blank" rel="noopener" hidden>Mở Google Sheet</a>
+      <button class="link-btn" type="button" id="btn-backup" hidden>Tải toàn bộ dữ liệu (Excel)</button>
+      <button class="link-btn" type="button" id="btn-logout" hidden>Đăng xuất</button>
+    </div>
+  </aside>
+
+  <main>
+    <div id="banner" style="max-width:1080px;margin-bottom:24px" hidden></div>
+    <!-- ĐĂNG NHẬP -->
+    <section class="page" id="p-dang-nhap">
+      <div class="panel panel-b stack" style="max-width:480px">
+        <h1>Kho Hoành Uy</h1>
+        <p class="sub">Đăng nhập bằng Gmail đã được chia sẻ Google Sheet <b>Kho Hoanh Uy - Du lieu</b>. App đọc và ghi thẳng vào Sheet đó.</p>
+        <button class="btn" type="button" id="btn-login">Đăng nhập Google</button>
+        <div id="login-msg"></div>
+      </div>
+    </section>
+    <!-- TỔNG QUAN -->
+    <section class="page" id="p-tong-quan">
+      <div class="page-h">
+        <div class="t"><h1>Tổng quan</h1><p class="sub" id="tq-ngay"></p></div>
+        <div class="acts">
+          <button class="btn sec" type="button" id="go-xuat">Xuất hàng</button>
+          <button class="btn" type="button" id="go-nhap">Nhập hàng</button>
+        </div>
+      </div>
+      <div class="panel stats" id="stats"></div>
+      <div class="two">
+        <div class="panel">
+          <div class="panel-h"><h2>Nhập và xuất theo tháng</h2><div class="legend"><span><i style="background:var(--bar-in)"></i>Nhập</span><span><i style="background:var(--bar-out)"></i>Xuất</span></div></div>
+          <div class="panel-b"><div id="chart"></div><p class="cap" style="margin-top:8px">Số lượng phụ tùng, không tính keo (kg) và dịch vụ</p></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Bán thường xuyên nhất</h2><span class="cap">số lần xuất</span></div>
+          <div class="panel-b" style="padding-top:4px"><ol class="rank" id="rank"></ol></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Cần xử lý</h2><span class="cap" id="can-dem"></span></div>
+        <div class="tbl" style="margin-top:8px"><table id="t-can"></table></div>
+      </div>
+    </section>
+
+    <!-- PHIẾU -->
+    <section class="page" id="p-phieu">
+      <div class="page-h">
+        <div class="t"><h1 id="ph-title">Phiếu nhập</h1><p class="sub">Một phiếu ứng với một hóa đơn, có thể gồm nhiều mặt hàng.</p></div>
+        <div class="seg" role="group" aria-label="Loại phiếu">
+          <button type="button" id="seg-n" aria-pressed="true">Phiếu nhập</button>
+          <button type="button" id="seg-x" aria-pressed="false">Phiếu xuất</button>
+        </div>
+      </div>
+      <form class="panel panel-b stack" id="f-phieu" novalidate>
+        <div class="grid g-phieu">
+          <div class="f"><label for="p-ngay">Ngày</label><input type="date" id="p-ngay"></div>
+          <div class="f wide"><label for="p-dt" id="lb-dt">Nhà cung cấp</label><input id="p-dt" list="dl-dt" autocomplete="off"></div>
+          <div class="f"><label for="p-sohd">Số hóa đơn</label><input id="p-sohd" placeholder="Không bắt buộc" autocomplete="off"></div>
+          <div class="f"><label for="p-hd">Hóa đơn</label><select id="p-hd"><option value="Y">Có</option><option value="N">Không</option></select></div>
+        </div>
+        <div>
+          <div class="lines-h"><span></span><span>Mặt hàng</span><span>Số lượng</span><span>Tồn hiện tại</span><span></span></div>
+          <div class="lines" id="lines" style="border-top:0"></div>
+        </div>
+        <div class="foot-row">
+          <button class="btn sec" type="button" id="add-line">+ Thêm dòng</button>
+          <button class="btn" type="submit" id="p-luu">Lưu phiếu nhập</button>
+        </div>
+        <div id="p-msg"></div>
+      </form>
+      <div class="panel">
+        <div class="panel-h"><h2>Phiếu gần đây</h2><span class="cap">phiếu bạn lập xóa được</span></div>
+        <div class="tbl" style="margin-top:8px"><table id="t-gan"></table></div>
+      </div>
+    </section>
+
+    <!-- TỒN KHO -->
+    <section class="page" id="p-ton-kho">
+      <div class="page-h"><div class="t"><h1>Tồn kho</h1><p class="sub" id="k-dem"></p></div></div>
+      <div class="filters">
+        <div class="f wide"><label for="k-tim">Tìm</label><input id="k-tim" placeholder="Mã hoặc tên hàng"></div>
+        <div class="f"><label for="k-nhom">Nhóm</label><select id="k-nhom"></select></div>
+        <div class="f"><label for="k-tt">Trạng thái</label><select id="k-tt"><option value="">Tất cả</option><option>Còn hàng</option><option>Sắp hết</option><option>Hết hàng</option><option>Lệch kiểm kê</option></select></div>
+      </div>
+      <div class="panel tbl"><table id="t-ton"></table></div>
+    </section>
+
+    <!-- KIỂM KÊ -->
+    <section class="page" id="p-kiem-ke">
+      <div class="page-h"><div class="t"><h1>Kiểm kê</h1><p class="sub">Đếm hàng thực tế, ghi số đếm, rồi xử lý chỗ lệch với sổ.</p></div></div>
+      <form class="panel panel-b stack" id="f-kk" novalidate>
+        <div class="grid g-kk">
+          <div class="f"><label for="kk-ngay">Ngày đếm</label><input type="date" id="kk-ngay"></div>
+          <div class="f wide"><label for="kk-ma">Mặt hàng</label><input id="kk-ma" list="dl-ma" placeholder="Gõ mã hoặc tên" autocomplete="off"></div>
+          <div class="f"><label for="kk-sl">Số đếm được</label><input id="kk-sl" class="num" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="f"><label for="kk-gc">Ghi chú</label><input id="kk-gc" placeholder="Ví dụ: 2 cái cho mượn" autocomplete="off"></div>
+          <button class="btn" type="submit">Lưu số đếm</button>
+        </div>
+        <p class="sub" id="kk-hint">Chọn mặt hàng để xem sổ đang ghi bao nhiêu.</p>
+        <div id="kk-msg"></div>
+      </form>
+      <div class="panel">
+        <div class="panel-h"><h2>Đang lệch với sổ</h2><span class="cap" id="lech-dem"></span></div>
+        <p class="cap" style="padding:4px 16px 0">Điều chỉnh sổ khi đã xác nhận số đếm đúng. App tạo phiếu điều chỉnh (DC) để sổ khớp thực tế.</p>
+        <div class="tbl" style="margin-top:8px"><table id="t-lech"></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Lịch sử kiểm kê</h2></div>
+        <div class="tbl" style="margin-top:8px"><table id="t-kk"></table></div>
+      </div>
+    </section>
+
+    <!-- DANH MỤC -->
+    <section class="page" id="p-danh-muc">
+      <div class="page-h">
+        <div class="t"><h1>Danh mục hàng</h1><p class="sub" id="dm-dem"></p></div>
+        <button class="btn sec" type="button" id="dm-moi">Thêm mặt hàng mới</button>
+      </div>
+      <form class="panel panel-b stack" id="f-dm" novalidate>
+        <h2 id="dm-title">Thêm mặt hàng mới</h2>
+        <div class="grid g-dm">
+          <div class="f"><label for="dm-ma">Mã hàng</label><input id="dm-ma" autocomplete="off" placeholder="VD: BEC-10T"></div>
+          <div class="f wide"><label for="dm-ten">Tên hàng</label><input id="dm-ten" autocomplete="off"></div>
+          <div class="f"><label for="dm-dvt">ĐVT</label><input id="dm-dvt" list="dl-dvt" autocomplete="off"></div>
+          <div class="f"><label for="dm-nhom">Nhóm</label><input id="dm-nhom" list="dl-nhom" autocomplete="off"></div>
+          <div class="f"><label for="dm-min">Tồn tối thiểu</label><input id="dm-min" class="num" type="number" min="0" step="1"></div>
+          <div class="f"><label for="dm-dau">Tồn đầu kỳ</label><input id="dm-dau" class="num" type="number" min="0" step="1"></div>
+        </div>
+        <div class="foot-row">
+          <p class="cap" id="dm-hint">Mã viết hoa, không dấu, không khoảng trắng. Đã có giao dịch thì không đổi mã được.</p>
+          <button class="btn" type="submit" id="dm-luu">Thêm vào danh mục</button>
+        </div>
+        <div id="dm-msg"></div>
+      </form>
+      <div class="panel tbl"><table id="t-dm"></table></div>
+    </section>
+
+    <!-- BÁO CÁO -->
+    <section class="page" id="p-bao-cao">
+      <div class="page-h"><div class="t"><h1>Báo cáo tồn kho</h1><p class="sub" id="b-tieude"></p></div></div>
+      <div class="bc-ctl">
+        <div class="f"><label for="b-quy">Quý</label><select id="b-quy"><option value="1">Quý 1</option><option value="2">Quý 2</option><option value="3">Quý 3</option><option value="4">Quý 4</option></select></div>
+        <div class="f"><label for="b-nam">Năm</label><select id="b-nam"><option>2026</option></select></div>
+        <div class="f wide"><label for="b-hd">Phạm vi</label><select id="b-hd"><option value="Y">Chỉ hàng có hóa đơn (gửi kế toán)</option><option value="">Tất cả (nội bộ)</option></select></div>
+        <div class="acts">
+          <button class="btn sec" type="button" id="b-copy">Sao chép</button>
+          <button class="btn" type="button" id="b-xlsx" hidden>Tải Excel</button>
+        </div>
+      </div>
+      <div id="b-msg"></div>
+      <div class="panel tbl"><table id="t-bc"></table></div>
+    </section>
+
+    <!-- LỊCH SỬ -->
+    <section class="page" id="p-lich-su">
+      <div class="page-h"><div class="t"><h1>Lịch sử mặt hàng</h1><p class="sub" id="l-tom">Chọn một mặt hàng.</p></div></div>
+      <div class="f" style="max-width:480px"><label for="l-ma">Mặt hàng</label><input id="l-ma" list="dl-ma" placeholder="Gõ mã hoặc tên rồi chọn" autocomplete="off"></div>
+      <div class="panel tbl"><table id="t-ls"></table></div>
+    </section>
+
+    <!-- HỎI KHO -->
+    <section class="page" id="p-hoi-kho">
+      <div class="page-h"><div class="t"><h1>Hỏi kho</h1><p class="sub">Mô phỏng bot Telegram, chạy bằng quy tắc từ khóa, không gửi dữ liệu đi đâu.</p></div></div>
+      <div class="panel" style="max-width:720px">
+        <div class="sugs" id="sugs"></div>
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <form class="ask" id="f-ask">
+          <label for="c-in" class="sr">Câu hỏi</label>
+          <input id="c-in" placeholder="Ví dụ: còn béc 0.4 không" autocomplete="off">
+          <button class="btn" type="submit">Gửi</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<button class="fab" type="button" id="fab" aria-label="Tạo mới" aria-expanded="false" aria-controls="fab-menu">+</button>
+<div class="fab-menu" id="fab-menu" role="menu">
+  <button type="button" role="menuitem" data-tao="N">Phiếu nhập</button>
+  <button type="button" role="menuitem" data-tao="X">Phiếu xuất</button>
+  <button type="button" role="menuitem" data-tao="KK">Kiểm kê</button>
+  <button type="button" role="menuitem" data-tao="DM">Mặt hàng mới</button>
+</div>
+
+<datalist id="dl-ma"></datalist>
+<datalist id="dl-dt"></datalist>
+<datalist id="dl-nhom"></datalist>
+<datalist id="dl-dvt"></datalist>
+
+<div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+  <div class="panel">
+    <h2 id="dlg-t"></h2>
+    <p class="sub" id="dlg-p"></p>
+    <div class="acts">
+      <button class="btn sec" type="button" id="dlg-no">Hủy</button>
+      <button class="btn" type="button" id="dlg-yes">Đồng ý</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
