@@ -26,6 +26,7 @@
   --r: 8px;
   --h-ctl: 36px;
   --head: #F3F6F5;
+  --het: #E7B3AE;
   --shadow: 0 1px 2px rgba(16, 32, 28, 0.04), 0 2px 6px rgba(16, 32, 28, 0.05);
   --side-bg: #0F2D29; --side-ink: #B9CBC7; --side-hi: #FFFFFF; --side-line: rgba(255, 255, 255, 0.08);
   --side-hover: rgba(255, 255, 255, 0.06); --side-on: rgba(94, 214, 189, 0.14); --side-mark: #5ED6BD;
@@ -37,7 +38,7 @@
     --bg: #111615; --panel: #171D1C; --ink: #E3EAE8; --ink-2: #A9B6B3; --ink-3: #7F8E8B; --line: #263130;
     --accent: #4BBFA9; --accent-wash: #17302B; --on-accent: #0E1413;
     --ok: #5FC890; --warn: #E3A752; --bad: #F08078; --bar-in: #4BBFA9; --bar-out: #E3A061;
-    --head: #1B2221; --shadow: none; --side-bg: #0B1312;
+    --head: #1B2221; --het: #6B3A36; --shadow: none; --side-bg: #0B1312;
     color-scheme: dark;
   }
 }
@@ -45,7 +46,7 @@
   --bg: #111615; --panel: #171D1C; --ink: #E3EAE8; --ink-2: #A9B6B3; --ink-3: #7F8E8B; --line: #263130;
   --accent: #4BBFA9; --accent-wash: #17302B; --on-accent: #0E1413;
   --ok: #5FC890; --warn: #E3A752; --bad: #F08078; --bar-in: #4BBFA9; --bar-out: #E3A061;
-  --head: #1B2221; --shadow: none; --side-bg: #0B1312;
+  --head: #1B2221; --het: #6B3A36; --shadow: none; --side-bg: #0B1312;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -151,6 +152,26 @@ svg.chart { width: 100%; height: auto; display: block; }
 svg.chart text { fill: var(--ink-3); font: 400 11px var(--font); }
 svg.chart .g { stroke: var(--line); } svg.chart .bi { fill: var(--bar-in); } svg.chart .bo { fill: var(--bar-out); }
 .rank { margin: 0; padding: 0; }
+/* Biểu đồ thanh ngang theo nhóm */
+.hbars { display: flex; flex-direction: column; gap: 2px; }
+.hb { display: grid; grid-template-columns: 180px 1fr 96px; gap: var(--s3); align-items: center; width: 100%; height: 36px; padding: 0 var(--s2); border: 0; border-radius: 6px; background: none; text-align: left; cursor: pointer; }
+.hb:hover { background: var(--accent-wash); }
+.hb .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb .tr { height: 16px; }
+.hb .sg { display: flex; height: 100%; min-width: 4px; border-radius: 4px; overflow: hidden; }
+.hb .sg i { display: block; height: 100%; }
+.hb .n { text-align: right; color: var(--ink-2); font-size: var(--t-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hb .n b { color: var(--ink); font-size: var(--t-sm); }
+/* Thanh mức tồn trong bảng */
+.lv { display: flex; align-items: center; justify-content: flex-end; gap: var(--s2); }
+.lv .bar { width: 72px; height: 6px; border-radius: 3px; background: var(--head); overflow: hidden; flex: none; }
+.lv .bar i { display: block; height: 100%; border-radius: 3px; background: var(--ok); }
+.lv.warn .bar i { background: var(--warn); } .lv.bad .bar i { background: var(--bad); } .lv.neu .bar i { background: var(--ink-3); }
+.lv b { min-width: 40px; text-align: right; }
+svg.chart .area { fill: var(--accent); opacity: 0.08; }
+svg.chart .ln { fill: none; stroke: var(--accent); stroke-width: 2; }
+svg.chart .mn { stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 4 4; }
+svg.chart .di { fill: var(--bar-in); stroke: var(--panel); stroke-width: 1.5; } svg.chart .do { fill: var(--bar-out); stroke: var(--panel); stroke-width: 1.5; }
 .rank li { list-style: none; display: grid; grid-template-columns: 1fr auto; gap: var(--s1) var(--s3); padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .rank li:last-child { border-bottom: 0; }
 .rank li > span:first-child { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -236,6 +257,8 @@ main { padding-bottom: 96px; }
   .line { grid-template-columns: 1fr 96px 36px; }
   .line .idx { display: none; }
   .line .hint { grid-column: 1 / -1; grid-row: 2; }
+  .hb { grid-template-columns: 96px 1fr 64px; }
+  .lv .bar { width: 40px; }
 }
 @media (max-width: 900px) { main { padding-bottom: 96px; } .fab { right: var(--s4); bottom: var(--s4); } .fab-menu { right: var(--s4); bottom: 80px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -290,6 +313,10 @@ main { padding-bottom: 96px; }
         </div>
       </div>
       <div class="panel">
+        <div class="panel-h"><h2>Tồn theo nhóm hàng</h2><div class="legend"><span><i style="background:var(--ok)"></i>Còn hàng</span><span><i style="background:var(--warn)"></i>Sắp hết</span><span><i style="background:var(--het)"></i>Hết hàng</span><span><i style="background:var(--bad)"></i>Lệch / âm</span></div></div>
+        <div class="panel-b"><div class="hbars" id="nhom-chart"></div><p class="cap" style="margin-top:8px">Số mã hàng trong mỗi nhóm. Bấm một nhóm để xem danh sách.</p></div>
+      </div>
+      <div class="panel">
         <div class="panel-h"><h2>Cần xử lý</h2><span class="cap" id="can-dem"></span></div>
         <div class="tbl" style="margin-top:8px"><table id="t-can"></table></div>
       </div>
@@ -335,6 +362,7 @@ main { padding-bottom: 96px; }
         <div class="f"><label for="k-nhom">Nhóm</label><select id="k-nhom"></select></div>
         <div class="f"><label for="k-tt">Trạng thái</label><select id="k-tt"><option value="">Tất cả</option><option>Còn hàng</option><option>Sắp hết</option><option>Hết hàng</option><option>Lệch kiểm kê</option></select></div>
       </div>
+      <p class="cap" style="margin-top:-16px">Thanh màu ở cột Tồn: tồn hiện tại so với lượng bán trong 3 tháng (tính theo 12 tháng gần nhất). Đầy thanh là đủ bán từ 3 tháng trở lên.</p>
       <div class="panel tbl"><table id="t-ton"></table></div>
     </section>
 
@@ -408,6 +436,10 @@ main { padding-bottom: 96px; }
     <section class="page" id="p-lich-su">
       <div class="page-h"><div class="t"><h1>Lịch sử mặt hàng</h1><p class="sub" id="l-tom">Chọn một mặt hàng.</p></div></div>
       <div class="f" style="max-width:480px"><label for="l-ma">Mặt hàng</label><input id="l-ma" list="dl-ma" placeholder="Gõ mã hoặc tên rồi chọn" autocomplete="off"></div>
+      <div class="panel" id="l-chart-wrap" hidden>
+        <div class="panel-h"><h2>Tồn kho theo thời gian</h2><div class="legend"><span><i style="background:var(--bar-in);border-radius:50%"></i>Nhập</span><span><i style="background:var(--bar-out);border-radius:50%"></i>Xuất</span><span><i style="background:var(--warn);height:2px"></i>Mức tối thiểu</span></div></div>
+        <div class="panel-b"><div id="l-chart"></div><p class="cap" style="margin-top:8px" id="l-chart-cap"></p></div>
+      </div>
       <div class="panel tbl"><table id="t-ls"></table></div>
     </section>
 

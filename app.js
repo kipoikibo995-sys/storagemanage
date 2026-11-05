@@ -280,6 +280,7 @@ function veTongQuan() {
   DB.phieu.forEach(function (p) { if (p.loai === 'X' && HMAP[p.ma] && HMAP[p.ma].nhom !== 'Dịch vụ' && (p.ngay || '').slice(0, 4) === nam) dem[p.ma] = (dem[p.ma] || 0) + 1; });
   var top5 = Object.keys(dem).sort(function (a, b) { return dem[b] - dem[a]; }).slice(0, 5), mx = top5.length ? dem[top5[0]] : 1;
   $('rank').innerHTML = top5.length ? top5.map(function (ma) { return '<li><span><b>' + esc(ma) + '</b> <span class="sub">' + esc(HMAP[ma].ten) + '</span></span><span class="num">' + dem[ma] + '</span><span class="bar"><i style="width:' + (dem[ma] / mx * 100) + '%"></i></span></li>'; }).join('') : '<li class="sub" style="display:block">Chưa có phiếu xuất năm nay.</li>';
+  veNhom(T);
   var o = { 'Âm kho': 0, 'Hết hàng': 1, 'Lệch kiểm kê': 2, 'Sắp hết': 3 };
   var can = DB.hang.filter(function (h) { return o[T[h.ma].tt] != null && !(T[h.ma].tt === 'Hết hàng' && !daBanGanDay(h.ma)); }).sort(function (a, b) { return o[T[a.ma].tt] - o[T[b.ma].tt]; });
   $('can-dem').textContent = can.length + ' mặt hàng · hết hàng chỉ tính mã có bán trong 12 tháng';
@@ -290,6 +291,32 @@ function veTongQuan() {
       return '<tr class="go" data-ma="' + esc(h.ma) + '"><td><b>' + esc(h.ma) + '</b></td><td style="white-space:normal">' + esc(h.ten) + '</td><td class="r">' + so(t.so) + '</td><td class="r">' + (h.min ? so(h.min) : '') + '</td><td>' + st(t.tt) + '</td><td class="sub">' + esc(viec) + '</td></tr>';
     }).join('') + '</tbody>' : '<tr><td class="empty">Không có mặt hàng nào cần xử lý.</td></tr>';
   ganDong($('t-can'), function (ma) { if (T[ma].tt === 'Lệch kiểm kê') den('kiem-ke'); else xemLichSu(ma); });
+}
+function veNhom(T) {
+  var g = {};
+  DB.hang.forEach(function (h) {
+    if (h.nhom === 'Dịch vụ') return;
+    var k = h.nhom || 'Chưa phân nhóm', t = T[h.ma].tt;
+    if (!g[k]) g[k] = { con: 0, sap: 0, het: 0, lech: 0, n: 0 };
+    g[k].n++;
+    if (t === 'Còn hàng') g[k].con++; else if (t === 'Sắp hết') g[k].sap++; else if (t === 'Hết hàng') g[k].het++; else g[k].lech++;
+  });
+  var ds = Object.keys(g).sort(function (x, y) { return g[y].n - g[x].n; }), mx = ds.length ? g[ds[0]].n : 1;
+  $('nhom-chart').innerHTML = ds.map(function (k) {
+    var v = g[k], seg = function (n, mau, ten) { return n ? '<i style="width:' + (n / v.n * 100) + '%;background:var(' + mau + ')" title="' + ten + ': ' + n + '"></i>' : ''; };
+    return '<button type="button" class="hb" data-nhom="' + esc(k) + '" title="' + esc(k) + ': ' + v.con + ' còn hàng, ' + v.sap + ' sắp hết, ' + v.het + ' hết hàng, ' + v.lech + ' lệch">' +
+      '<span class="nm">' + esc(k) + '</span><span class="tr"><span class="sg" style="width:' + (v.n / mx * 100) + '%">' + seg(v.con, '--ok', 'Còn hàng') + seg(v.sap, '--warn', 'Sắp hết') + seg(v.het, '--het', 'Hết hàng') + seg(v.lech, '--bad', 'Lệch / âm') + '</span></span>' +
+      '<span class="n"><b>' + v.con + '</b> / ' + v.n + ' còn</span></button>';
+  }).join('') || '<p class="sub">Chưa có mặt hàng.</p>';
+  Array.prototype.forEach.call($('nhom-chart').querySelectorAll('[data-nhom]'), function (b) {
+    b.onclick = function () { var k = b.dataset.nhom; $('k-tim').value = ''; $('k-tt').value = ''; $('k-nhom').value = k === 'Chưa phân nhóm' ? '' : k; veTon(); den('ton-kho'); };
+  });
+}
+// Lượng bán 12 tháng gần nhất của từng mã (tính cả lịch sử cũ)
+function banNam() {
+  var moc = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10), b = {};
+  DB.phieu.forEach(function (p) { if (p.loai === 'X' && (p.ngay || '') >= moc) b[p.ma] = (b[p.ma] || 0) + p.sl; });
+  return b;
 }
 function daBanGanDay(ma) {
   var moc = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
@@ -412,12 +439,20 @@ async function xoaPhieu(sp) {
 
 /* ============ TỒN KHO ============ */
 function veTon() {
-  var T = tinhTon(), q = boDau($('k-tim').value.trim()), nhom = $('k-nhom').value, tt = $('k-tt').value;
+  var T = tinhTon(), B = banNam(), q = boDau($('k-tim').value.trim()), nhom = $('k-nhom').value, tt = $('k-tt').value;
   var rows = DB.hang.filter(function (h) { if (q && boDau(h.ma + ' ' + h.ten).indexOf(q) < 0) return false; if (nhom && h.nhom !== nhom) return false; if (tt && T[h.ma].tt !== tt) return false; return true; });
   $('k-dem').textContent = rows.length + ' mặt hàng. Bấm một dòng để xem lịch sử.';
   $('t-ton').innerHTML = rows.length ? '<thead><tr><th>Mã</th><th>Tên hàng</th><th>Nhóm</th><th class="r">Tồn</th><th>ĐVT</th><th class="r">Tối thiểu</th><th class="r">Đếm gần nhất</th><th>Trạng thái</th></tr></thead><tbody>' +
-    rows.map(function (h) { var t = T[h.ma], dv = h.nhom === 'Dịch vụ'; return '<tr class="go' + (t.so <= 0 && !dv ? ' dim' : '') + '" data-ma="' + esc(h.ma) + '"><td><b>' + esc(h.ma) + '</b></td><td style="white-space:normal">' + esc(h.ten) + '</td><td class="sub">' + esc(h.nhom) + '</td><td class="r"><b>' + (dv ? '–' : so(t.so)) + '</b></td><td class="sub">' + esc(h.dvt) + '</td><td class="r">' + (h.min ? so(h.min) : '') + '</td><td class="r">' + (t.kk == null || dv ? '' : so(t.kk) + (t.lech ? ' (' + soDau(t.lech) + ')' : '')) + '</td><td>' + st(t.tt) + '</td></tr>'; }).join('') + '</tbody>' : '<tr><td class="empty">Không có mặt hàng nào khớp bộ lọc.</td></tr>';
+    rows.map(function (h) { var t = T[h.ma], dv = h.nhom === 'Dịch vụ'; return '<tr class="go' + (t.so <= 0 && !dv ? ' dim' : '') + '" data-ma="' + esc(h.ma) + '"><td><b>' + esc(h.ma) + '</b></td><td style="white-space:normal">' + esc(h.ten) + '</td><td class="sub">' + esc(h.nhom) + '</td><td class="r">' + (dv ? '–' : mucTon(t.so, B[h.ma] || 0, h.min)) + '</td><td class="sub">' + esc(h.dvt) + '</td><td class="r">' + (h.min ? so(h.min) : '') + '</td><td class="r">' + (t.kk == null || dv ? '' : so(t.kk) + (t.lech ? ' (' + soDau(t.lech) + ')' : '')) + '</td><td>' + st(t.tt) + '</td></tr>'; }).join('') + '</tbody>' : '<tr><td class="empty">Không có mặt hàng nào khớp bộ lọc.</td></tr>';
   ganDong($('t-ton'), xemLichSu);
+}
+// Thanh mức tồn: so với lượng bán 3 tháng; chưa bán thì so với mức tối thiểu
+function mucTon(ton, ban, min) {
+  var ref = ban > 0 ? ban / 4 : min > 0 ? min * 2 : 0, pct, c, ghi;
+  if (ton <= 0) { pct = 0; c = 'bad'; ghi = 'Hết hàng'; }
+  else if (!ref) { pct = 100; c = 'neu'; ghi = 'Chưa bán trong 12 tháng'; }
+  else { pct = Math.min(100, ton / ref * 100); c = pct < 34 ? 'bad' : pct < 67 ? 'warn' : ''; ghi = ban > 0 ? 'Đủ bán khoảng ' + Math.max(1, Math.round(ton / (ban / 365))) + ' ngày' : 'So với mức tối thiểu ' + so(min); }
+  return '<span class="lv ' + c + '" title="' + ghi + '"><span class="bar"><i style="width:' + pct + '%"></i></span><b>' + so(ton) + '</b></span>';
 }
 ['k-tim', 'k-nhom', 'k-tt'].forEach(function (id) { $(id).addEventListener('input', veTon); });
 
@@ -564,14 +599,43 @@ $('btn-backup').onclick = function () {
 /* ============ LỊCH SỬ ============ */
 function veLichSu() {
   var ma = maTu($('l-ma').value);
-  if (!ma) { $('l-tom').textContent = 'Chọn một mặt hàng để xem mọi lần nhập, xuất và điều chỉnh.'; $('t-ls').innerHTML = ''; return; }
+  if (!ma) { $('l-tom').textContent = 'Chọn một mặt hàng để xem mọi lần nhập, xuất và điều chỉnh.'; $('t-ls').innerHTML = ''; $('l-chart-wrap').hidden = true; return; }
   var h = HMAP[ma], T = tinhTon()[ma], nam = HOM_NAY.slice(0, 4), rows = DB.phieu.filter(function (p) { return p.ma === ma; }).sort(function (a, b) { return (a.ngay || '') < (b.ngay || '') ? 1 : (a.ngay || '') > (b.ngay || '') ? -1 : 0; });
   var ban = rows.filter(function (p) { return p.loai === 'X' && (p.ngay || '').slice(0, 4) === nam; }), tong = 0, kh = {};
   ban.forEach(function (p) { tong += p.sl; kh[p.doiTac] = (kh[p.doiTac] || 0) + p.sl; });
   var top = Object.keys(kh).sort(function (a, b) { return kh[b] - kh[a]; })[0];
   $('l-tom').innerHTML = '<b>' + esc(ma) + '</b> ' + esc(h.ten) + ' · tồn ' + so(T.so) + ' ' + esc(String(h.dvt).toLowerCase()) + ' (tồn chuẩn ' + so(h.dau) + ') · năm nay bán ' + so(tong) + ' qua ' + ban.length + ' lần' + (top ? ' · mua nhiều nhất: ' + esc(top) : '');
+  veDuongTon(ma, h, T.so, rows);
   $('t-ls').innerHTML = rows.length ? '<thead><tr><th>Ngày</th><th>Số phiếu</th><th class="r">Số lượng</th><th>Đối tác</th><th>Hóa đơn</th><th>Ghi chú</th></tr></thead><tbody>' +
     rows.map(function (p) { var d = hienSL(p); return '<tr' + (p.cu ? ' class="dim"' : '') + '><td class="num">' + ngayVN(p.ngay) + '</td><td>' + esc(p.so || (p.cu ? 'Lịch sử cũ' : '')) + '</td><td class="r ' + (p.cu ? '' : d > 0 ? 'in' : 'out') + '">' + soDau(d) + '</td><td>' + esc(p.doiTac) + '</td><td class="sub">' + (p.loai === 'D' ? '' : p.hd === 'Y' ? (p.soHD ? 'Số ' + esc(p.soHD) : 'Có') : 'Không') + '</td><td class="sub" style="white-space:normal">' + esc(p.gc) + '</td></tr>'; }).join('') + '</tbody>' : '<tr><td class="empty">Mặt hàng này chưa có giao dịch.</td></tr>';
+}
+// Đường tồn 12 tháng: tính lùi từ tồn hiện tại qua từng lần nhập/xuất (kể cả lịch sử cũ)
+function veDuongTon(ma, h, tonNay, rows) {
+  if (h.nhom === 'Dịch vụ') { $('l-chart-wrap').hidden = true; return; }
+  $('l-chart-wrap').hidden = false;
+  var DAY = 864e5, homNay = Date.parse(HOM_NAY), bd = homNay - 365 * DAY;
+  var ev = rows.filter(function (p) { return /^\d{4}-\d{2}-\d{2}$/.test(p.ngay || ''); }).map(function (p) { return { t: Date.parse(p.ngay), d: hienSL(p), p: p }; })
+    .sort(function (x, y) { return x.t - y.t || (x.p.row || 0) - (y.p.row || 0); });
+  var sau = 0; ev.forEach(function (e) { if (e.t > bd) sau += e.d; });
+  var muc = tonNay - sau, ds = [], lo = Math.min(0, muc), hi = Math.max(muc, h.min || 0, 1);
+  ev.forEach(function (e) { if (e.t <= bd || e.t > homNay) return; muc += e.d; ds.push({ t: e.t, v: muc, d: e.d, p: e.p }); lo = Math.min(lo, muc); hi = Math.max(hi, muc); });
+  var dau = tonNay - sau;
+  var raw = (hi - lo) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw || 1))), step = [1, 2, 5, 10].map(function (k) { return k * mag; }).filter(function (s) { return s >= raw; })[0] || mag * 10;
+  var top = Math.ceil(hi / step) * step, bot = Math.floor(lo / step) * step;
+  var W = 900, H = 240, L = 44, R = 12, T0 = 12, B = 28, iw = W - L - R, ih = H - T0 - B;
+  var X = function (t) { return L + (t - bd) / (homNay - bd) * iw; }, Y = function (v) { return T0 + (top - v) / (top - bot || 1) * ih; };
+  var s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Tồn kho ' + esc(ma) + ' 12 tháng gần nhất">';
+  for (var g = bot; g <= top + 1e-9; g += step) s += '<line class="g" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g) + '" y2="' + Y(g) + '"/><text x="' + (L - 6) + '" y="' + (Y(g) + 4) + '" text-anchor="end">' + so(Math.round(g * 100) / 100) + '</text>';
+  var d0 = new Date(bd); d0 = new Date(d0.getFullYear(), d0.getMonth() + 1, 1);
+  for (; d0.getTime() <= homNay; d0 = new Date(d0.getFullYear(), d0.getMonth() + 1, 1)) s += '<text x="' + X(d0.getTime()) + '" y="' + (H - 8) + '" text-anchor="middle">T' + (d0.getMonth() + 1) + '</text>';
+  if (h.min > 0) s += '<line class="mn" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(h.min) + '" y2="' + Y(h.min) + '"/>';
+  var path = 'M' + X(bd) + ' ' + Y(dau), v = dau;
+  ds.forEach(function (e) { path += ' H' + X(e.t) + ' V' + Y(e.v); v = e.v; });
+  path += ' H' + X(homNay);
+  s += '<path class="area" d="' + path + ' V' + Y(Math.max(bot, 0)) + ' H' + X(bd) + ' Z"/><path class="ln" d="' + path + '"/>';
+  ds.forEach(function (e) { s += '<circle class="' + (e.d >= 0 ? 'di' : 'do') + '" cx="' + X(e.t) + '" cy="' + Y(e.v) + '" r="4.5"><title>' + ngayVN(e.p.ngay) + ': ' + (e.d >= 0 ? 'nhập ' : 'xuất ') + so(Math.abs(e.d)) + (e.p.doiTac ? ' · ' + esc(e.p.doiTac) : '') + ' → tồn ' + so(e.v) + '</title></circle>'; });
+  $('l-chart').innerHTML = s + '</svg>';
+  $('l-chart-cap').textContent = ds.length ? ds.length + ' lần nhập/xuất trong 12 tháng. Rê chuột vào chấm để xem chi tiết. Đường tồn tính lùi từ tồn hiện tại.' : 'Không có nhập/xuất trong 12 tháng gần nhất, tồn giữ nguyên ' + so(tonNay) + '.';
 }
 $('l-ma').addEventListener('input', veLichSu);
 
